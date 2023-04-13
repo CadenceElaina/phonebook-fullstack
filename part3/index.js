@@ -70,83 +70,39 @@ app.delete('/api/persons/:id', (request, response, next) => {
         .catch(error => next(error))
 })
 
-app.post('/api/persons', async (request, response) => {
+app.post("/api/persons", (request, response, next) => {
     const { name, number } = request.body
-    if (!name && !number) {
-        return res.status(400).json({
-            error: 'The name and number are missing',
-        })
-    }
-    if (!name) {
-        return response.status(400).json({
-            error: 'name is missing'
-        })
-    }
-    if (!number) {
-        return response.status(400).json({
-            error: 'number is missing'
-        })
-    }
-
-    let personExists = await Person.exists({ name: name })
-    if (personExists) {
-        return response.status(400).json({
-            error: 'The name already exists in the phonebook'
-        })
-    }
-
-    /*  if (persons.some(person => person.name === name)) {
-         return response.status(400).json({
-             error: 'name must be unique'
-         })
-     }
-     if (persons.some(person => person.number === number)) {
-         return response.status(400).json({
-             error: 'number must be unique'
-         })
-     } */
 
     const person = new Person({
-        /*   id: generateId(), */
         name: name,
         number: number,
-    })
+    });
 
-    try {
-        await person.save()
-        response.json(person)
-    } catch (error) {
-        next(error)
-    }
-    /*     person
-            .save()
-            .then((savedPerson) => {
-                response.json(savedPerson)
-            })
-            .catch((error) => next(error)) */
+    person
+        .save()
+        .then((savedPerson) => {
+            response.json(savedPerson)
+        })
+        .catch((error) => next(error))
 })
 
-app.put('/api/persons/:id', (request, response, next) => {
-    const { name, number } = request.body
+app.put("/api/persons/:id", (request, response, next) => {
+    const { name, number } = request.body;
 
-    const person = new Person({
-        /*  id: generateId(), */
-        name: name,
-        number: number,
-    })
-
-    Person
-        .findByIdAndUpdate(request.params.id, person, { new: true })
-        .then(updatedPerson => {
+    Person.findByIdAndUpdate(
+        request.params.id,
+        { name, number },
+        { new: true, runValidators: true, context: "query" }
+    )
+        .then((updatedPerson) => {
             response.json(updatedPerson)
         })
-        .catch(error => next(error))
+        .catch((error) => next(error))
 })
 
-
 const unknownEndpoint = (request, response) => {
-    response.status(404).send({ error: "unknown endpoint" });
-};
+    response.status(404).send({ error: "unknown endpoint" })
+}
 
 app.use(unknownEndpoint);
 
@@ -154,15 +110,15 @@ const errorHandler = (error, request, response, next) => {
     console.error(error.message);
 
     if (error.name === "CastError") {
-        return response.status(400).send({ error: "malformatted id" });
+        return response.status(400).send({ error: "malformatted id" })
     } else if (error.name === "ValidationError") {
-        return response.status(400).json({ error: error.message });
+        return response.status(400).json({ error: error.message })
     }
 
-    next(error);
-};
+    next(error)
+}
 
-app.use(errorHandler);
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
